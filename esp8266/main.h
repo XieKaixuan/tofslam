@@ -17,7 +17,7 @@
 #include <espressif/esp_wifi.h>
 #include <ssid_config.h>
 
-#define MQTT_HOST "192.168.1.40"
+#define MQTT_HOST "192.168.1.85"
 #define MQTT_PORT 1883
 #define MQTT_USER NULL
 #define MQTT_PASS NULL
@@ -39,8 +39,9 @@ typedef struct{
 	int imu_roll;
 }sensor_data;
 
+
 extern volatile sensor_data data;
-extern volatile int print_data;
+extern volatile int print_data, data_to_send;
 extern QueueHandle_t publish_queue;
 extern SemaphoreHandle_t wifi_alive, sem_print_data, sem_data;
 

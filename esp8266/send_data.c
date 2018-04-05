@@ -31,21 +31,25 @@ void send_data(void *pvParameters){
     printf("Socket created\n");
     while(1)
     {
+		xSemaphoreTake(sem_data,0);
+		if(data_to_send == 1)
+		{
+			data_to_send = 0;
+		    sprintf(msg,"%d,%d,%d,%d,%d,%d,%d,%d\n",data.laser1,data.laser2,data.laser3,data.laser4,data.laser5,data.laser6,data.laser7,data.imu_yaw);        
 
-        sprintf(msg,"%d,%d,%d,%d,%d,%d,%d,%d\n",data.laser1,data.laser2,data.laser3,data.laser4,data.laser5,data.laser6,data.laser7,data.imu_yaw);        
+		    struct netbuf* buf = netbuf_new();
+		    void* data = netbuf_alloc(buf, strlen(msg));
 
-        struct netbuf* buf = netbuf_new();
-        void* data = netbuf_alloc(buf, strlen(msg));
+		    memcpy (data, msg, strlen(msg));
+		    err = netconn_send(conn, buf);
 
-        memcpy (data, msg, strlen(msg));
-        err = netconn_send(conn, buf);
-
-        if (err != ERR_OK) {
-                    printf("%s : Could not send data!!! (%s)\n", __FUNCTION__, lwip_strerr(err));
-        }
-        printf("Sensor data sent over UDP Wifi\n");
-        netbuf_delete(buf); // De-allocate packet buffer
-        vTaskDelay(2000/portTICK_PERIOD_MS);
+		    if (err != ERR_OK) {
+		                printf("%s : Could not send data!!! (%s)\n", __FUNCTION__, lwip_strerr(err));
+		    }
+		    printf("Sensor data sent over UDP Wifi\n");
+		    netbuf_delete(buf); // De-allocate packet buffer
+		}
+		xSemaphoreGive(sem_data);
     }
 
     err = netconn_disconnect(conn);

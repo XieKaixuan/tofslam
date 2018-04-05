@@ -10,8 +10,9 @@ void get_data(void *pvParameters)
 	{
 		xSemaphoreTake(sem_data,0);
 		data = get_sensor_data();
+		data_to_send = 1;
 		xSemaphoreGive(sem_data);
-		vTaskDelay(1000 / portTICK_PERIOD_MS);
+		vTaskDelay(500 / portTICK_PERIOD_MS);
     }
 	
 }	
@@ -26,52 +27,42 @@ sensor_data get_sensor_data(){
 	received_data_msb=spi_transfer_8(1,80);
 	vTaskDelay(1);
 	received_data_lsb=spi_transfer_8(1,80);
-	data.laser1=(float)((received_data_msb << 8) | received_data_lsb);
+	data.laser1=(int)((received_data_msb << 8) | received_data_lsb);
 	vTaskDelay(1);
 	received_data_msb=spi_transfer_8(1,80);
 	vTaskDelay(1);
 	received_data_lsb=spi_transfer_8(1,80);
-	data.laser2=(float)((received_data_msb << 8) | received_data_lsb);
+	data.laser2=(int)((received_data_msb << 8) | received_data_lsb);
 	vTaskDelay(1);
 	received_data_msb=spi_transfer_8(1,80);
 	vTaskDelay(1);
 	received_data_lsb=spi_transfer_8(1,80);
-	data.laser3=(float)((received_data_msb << 8) | received_data_lsb);
+	data.laser3=(int)((received_data_msb << 8) | received_data_lsb);
 	vTaskDelay(1);
 	received_data_msb=spi_transfer_8(1,80);
 	vTaskDelay(1);
 	received_data_lsb=spi_transfer_8(1,80);
-	data.laser4=(float)((received_data_msb << 8) | received_data_lsb);
+	data.laser4=(int)((received_data_msb << 8) | received_data_lsb);
 	vTaskDelay(1);
 	received_data_msb=spi_transfer_8(1,80);
 	vTaskDelay(1);
 	received_data_lsb=spi_transfer_8(1,80);
-	data.laser5=(float)((received_data_msb << 8) | received_data_lsb);
+	data.laser5=(int)((received_data_msb << 8) | received_data_lsb);
 	vTaskDelay(1);
 	received_data_msb=spi_transfer_8(1,80);
 	vTaskDelay(1);
 	received_data_lsb=spi_transfer_8(1,80);
-	data.laser6=(float)((received_data_msb << 8) | received_data_lsb);
+	data.laser6=(int)((received_data_msb << 8) | received_data_lsb);
 	vTaskDelay(1);
 	received_data_msb=spi_transfer_8(1,80);
 	vTaskDelay(1);
 	received_data_lsb=spi_transfer_8(1,80);
-	data.laser7=(float)((received_data_msb << 8) | received_data_lsb);
-	vTaskDelay(1);
-	received_data_msb=spi_transfer_8(1,80);
-	vTaskDelay(1);
-	received_data_lsb=spi_transfer_8(1,80);
-	data.imu_yaw=((float)((received_data_msb << 8) | received_data_lsb))/100-360;
-	vTaskDelay(1);
-	received_data_msb=spi_transfer_8(1,80);
-	vTaskDelay(1);
-	received_data_lsb=spi_transfer_8(1,80);
-	data.imu_pitch=((float)((received_data_msb << 8) | received_data_lsb))/100-360;
+	data.laser7=(int)((received_data_msb << 8) | received_data_lsb);
 	vTaskDelay(1);
 	received_data_msb=spi_transfer_8(1,80);
 	vTaskDelay(1);
 	received_data_lsb=spi_transfer_8(1,0);
-	data.imu_roll=((float)((received_data_msb << 8) | received_data_lsb))/100-360;
+	data.imu_yaw=((int)((received_data_msb << 8) | received_data_lsb));
 	
 	return data;
 }

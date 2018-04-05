@@ -1,7 +1,7 @@
 #include <main.h>
 
 volatile sensor_data data;
-volatile int print_data = 0;
+volatile int print_data = 0, data_to_send = 0;
 SemaphoreHandle_t wifi_alive, sem_print_data, sem_data;
 QueueHandle_t publish_queue;
 
@@ -49,9 +49,9 @@ void user_init(void)
 		printf("Error creating the wifi task!\n");
 	}
 
-	/*xReturned = xTaskCreate(&mqtt_task, "mqtt_task", 1024, NULL, 2, &xHandle_mqtt_task);
+	xReturned = xTaskCreate(&mqtt_task, "mqtt_task", 1024, NULL, 2, &xHandle_mqtt_task);
 	if(xReturned != pdPASS)
 	{
 		printf("Error creating the mqqt task!\n");
-	}*/
+	}
 }
