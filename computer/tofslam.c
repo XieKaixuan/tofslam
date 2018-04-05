@@ -13,10 +13,17 @@ void main(void){
 	// Create both threads
 	pthread_t tid[2];
 
-	pthread_create(&tid[0], NULL, get_udp, NULL); //Get data from esp8266
+	if(pthread_create(&tid[0], NULL, get_udp, NULL) != 0) //Get data from esp8266
+	{
+		printf("Error creating GET_UDP thread\n");
+		return;
+	}
 	sleep(1);
-	pthread_create(&tid[1], NULL, slam, NULL); //Proccess SLAM
-	
+	if(pthread_create(&tid[1], NULL, slam, NULL) != 0); //Proccess SLAM
+	{
+		printf("Error creating SLAM thread\n");
+		return;
+	}
 	// Wait for the threads
 	pthread_join(tid[0],NULL);
     pthread_join(tid[1],NULL);
