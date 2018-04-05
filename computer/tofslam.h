@@ -7,6 +7,9 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <math.h>
+#include <pthread.h>
+#include <semaphore.h>
+#include <unistd.h>
 
 typedef struct{
 	int laser1;
@@ -23,6 +26,12 @@ typedef struct{
 	int imu_pitch;
 	int imu_roll;
 }sensor_data;
+
+extern sem_t sem_data;
+extern sensor_data data;
+
+void *get_udp(void *vargp);
+void *slam(void *vargp);
 
 #endif // _HEADERS
 
@@ -90,6 +99,8 @@ typedef struct {
 	double sigma_xy;
     double sigma_theta;
 } ts_state_t;
+
+
 
 void ts_state_init(ts_state_t *state, ts_map_t *map, ts_laser_parameters_t *laser_params, ts_position_t *position, int hole_width);
 void ts_build_scan(ts_sensor_data_t *sd, ts_scan_t *scan, ts_state_t *state);
