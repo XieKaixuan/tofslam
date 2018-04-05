@@ -53,4 +53,6 @@ void *slam(void *vargp){
 		
 	}
 
+	pthread_exit(NULL);
+
 }
