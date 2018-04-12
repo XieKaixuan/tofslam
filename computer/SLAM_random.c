@@ -23,6 +23,7 @@ void ts_random_init(ts_randomizer_t *d, unsigned long jsrseed)
         d->fn[i]=exp(-.5*dn*dn);            
         d->wn[i]=dn/m1;     d->wnt[i]=dn;
     }
+	printf("Randomizer initiated\n");
 }
 
 double ts_random_normal(ts_randomizer_t *d, double m, double s) 
@@ -88,19 +89,21 @@ ts_position_t ts_monte_carlo_search(ts_randomizer_t *randomizer, ts_scan_t *scan
     }
     currentpos = bestpos = lastbestpos = *start_pos;
     currentdist = ts_distance_scan_to_map(scan, map, &currentpos);
-    bestdist = lastbestdist = currentdist;
+	printf("Best dist: %d\n",currentdist);    
+	bestdist = lastbestdist = currentdist;
     
 	do {
 		currentpos = lastbestpos;
 		currentpos.x = ts_random_normal(randomizer, currentpos.x, sigma_xy);
 		currentpos.y = ts_random_normal(randomizer, currentpos.y, sigma_xy);
-	  	currentpos.theta = ts_random_normal(randomizer, currentpos.theta, sigma_theta);
+	  	//currentpos.theta = ts_random_normal(randomizer, currentpos.theta, sigma_theta);
 		//printf("Randomized: %f\n",currentpos.x);
 		//printf("Randomized: %f\n",currentpos.y);
 		//printf("Randomized: %f\n",currentpos.theta);
 	
 		currentdist = ts_distance_scan_to_map(scan, map, &currentpos);
-	
+		//printf("Best dist: %d, current dist: %d\n",bestdist,currentdist);		
+
 		if (currentdist < bestdist) {
 			bestdist = currentdist;
 			bestpos = currentpos;

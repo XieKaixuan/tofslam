@@ -2,8 +2,10 @@
 
 #include "tofslam.h"
 
+// Variables to be used
 sem_t sem_data;
 sensor_data data;
+int new_data = 0;
 
 void main(void){
 
@@ -19,7 +21,7 @@ void main(void){
 		return;
 	}
 	sleep(1);
-	if(pthread_create(&tid[1], NULL, slam, NULL) != 0); //Proccess SLAM
+	if(pthread_create(&tid[1], NULL, slam, NULL) != 0) //Proccess SLAM
 	{
 		printf("Error creating SLAM thread\n");
 		return;

@@ -1,5 +1,28 @@
 #include <tofslam.h>
 
+void set_params(ts_laser_parameters_t *laser_params)
+{
+	laser_params->offset = (double)25/2; // diameter/2 in mm
+    laser_params->angle[0] = -135*M_PI/180;
+    laser_params->angle[1] = -90*M_PI/180;
+    laser_params->angle[2] = -45*M_PI/180;
+    laser_params->angle[3] = 0*M_PI/180;
+    laser_params->angle[4] = 45*M_PI/180;
+    laser_params->angle[5] = 90*M_PI/180;
+    laser_params->angle[6] = 135*M_PI/180;
+    laser_params->angle[7] = 180*M_PI/180;
+    laser_params->distance_no_detection = 2000;
+	printf("Params set\n");
+}
+
+void set_init_pos(ts_position_t *position)
+{
+	position->x = TS_MAP_SIZE/2;
+    position->y = TS_MAP_SIZE/2;
+    position->theta = 0;	
+	printf("Pos init\n");
+}
+
 void ts_map_init(ts_map_t *map)
 {
     int x, y, initval;
@@ -8,14 +31,14 @@ void ts_map_init(ts_map_t *map)
     for (ptr = map->map, y = 0; y < TS_MAP_SIZE; y++) {
 		for (x = 0; x < TS_MAP_SIZE; x++, ptr++) {
 			*ptr = initval;
-			printf("Map init: %d\n",initval);
+			//printf("Map init: %d\n",map->map[y*TS_MAP_SIZE+x]);
 		}
     }
+	printf("Map initiated\n");
 }
 
 void ts_state_init(ts_state_t *state, ts_map_t *map, ts_laser_parameters_t *laser_params, ts_position_t *position, int hole_width)
 {
-	printf("Starting init state\n");
 	state->map = map;
 	state->laser_params = *laser_params;
 	state->position = *position;
@@ -23,9 +46,9 @@ void ts_state_init(ts_state_t *state, ts_map_t *map, ts_laser_parameters_t *lase
 	state->distance = 0;
 	state->done = 0;
 	state->hole_width = hole_width;
-	state->sigma_xy = 0;
+	state->sigma_xy = 0.000000005; //Check why I need to use such a little value
 	state->sigma_theta = 0;
-	state->timestamp = 0;
+	printf("State initiated\n");
 }
 
 // Convert sensor data to x and y position with respect the center of the robot and store in value OBSTACLE OR NO OBSTACLE
@@ -36,13 +59,13 @@ void ts_build_scan(ts_sensor_data_t *sd, ts_scan_t *scan, ts_state_t *state)
 	for(i=0;i<TS_SCAN_SIZE;i++)
 	{
 		
-		if((double)sd->d[i] >= state->laser_params.distance_no_detection)
+		if(sd->d[i] >= state->laser_params.distance_no_detection)
 		{
 			scan->x[i] = (state->laser_params.distance_no_detection * cos(state->laser_params.angle[i])) + state->laser_params.offset * cos(state->laser_params.angle[i]);
 		    scan->y[i] = (state->laser_params.distance_no_detection * sin(state->laser_params.angle[i])) + state->laser_params.offset * sin(state->laser_params.angle[i]);
 			scan->value[i] = TS_NO_OBSTACLE;
 		}
-		if (sd->d[i] > state->hole_width / 2)
+		else if(sd->d[i] > state->hole_width / 2)
 		{
 		    scan->x[i] = (sd->d[i] * cos(state->laser_params.angle[i])) + state->laser_params.offset * cos(state->laser_params.angle[i]);
 		    scan->y[i] = (sd->d[i] * sin(state->laser_params.angle[i])) + state->laser_params.offset * sin(state->laser_params.angle[i]);
@@ -84,6 +107,8 @@ int ts_distance_scan_to_map(ts_scan_t *scan, ts_map_t *map, ts_position_t *pos)
 
 #define SWAP(x, y) (x ^= y ^= x ^= y)
 
+
+// Implement bresenham's algorithm
 void
 ts_map_laser_ray(ts_map_t *map, int x1, int y1, int x2, int y2, int xp, int yp, int value, int alpha)
 {
@@ -174,19 +199,20 @@ ts_map_update(ts_scan_t *scan, ts_map_t *map, ts_position_t *pos, int quality, i
 
     c = cos(pos->theta * M_PI / 180);
     s = sin(pos->theta * M_PI / 180);
-    x1 = (int)floor(pos->x * TS_MAP_SCALE + 0.5); //Position of the robot in global system in number of "holes" and with respect to reference point
+    x1 = (int)floor(pos->x * TS_MAP_SCALE + 0.5); //Position of the robot in global system with respect to global system scaled
     y1 = (int)floor(pos->y * TS_MAP_SCALE + 0.5);
     // Translate and rotate scan to robot position
     for (i = 0; i != TS_SCAN_SIZE; i++) {
-        x2p = c * scan->x[i] - s * scan->y[i]; //Position of obstacles in global system but with respect to robot position
+        x2p = c * scan->x[i] - s * scan->y[i]; //Position of obstacles in global system with respect to global system but from the robot
         y2p = s * scan->x[i] + c * scan->y[i];  
-		xp = (int)floor((pos->x + x2p) * TS_MAP_SCALE + 0.5); //Position of obstacles in global system in number of "holes" and with respect to reference point
+		xp = (int)floor((pos->x + x2p) * TS_MAP_SCALE + 0.5); //Position of obstacles in global system from reference point
         yp = (int)floor((pos->y + y2p) * TS_MAP_SCALE + 0.5);
         dist = sqrt(x2p * x2p + y2p * y2p); //Distance from obstacles to robot position
-        add = hole_width / 2 / dist; 
-        x2p *= TS_MAP_SCALE * (1 + add); //Position of obstacles in global system and number of "holes" with respect to robot position
+        add = hole_width / 2 / dist;
+		printf("ADD = %f\n", add);
+        x2p *= TS_MAP_SCALE * (1 + add); //Position of obstacles in global system with respect to robot position
         y2p *= TS_MAP_SCALE * (1 + add); 
-        x2 = (int)floor(pos->x * TS_MAP_SCALE + x2p + 0.5); //Position of obstacles in global system in number of "holes" with respect to reference point and adding some dependance with the distance from obstacle to robot
+        x2 = (int)floor(pos->x * TS_MAP_SCALE + x2p + 0.5); //Position of obstacles in global system with respect to reference point and adding some dependance with the distance from obstacle to robot
         y2 = (int)floor(pos->y * TS_MAP_SCALE + y2p + 0.5);
         if (scan->value[i] == TS_NO_OBSTACLE) { 
             q = quality / 4;
@@ -202,14 +228,21 @@ ts_map_update(ts_scan_t *scan, ts_map_t *map, ts_position_t *pos, int quality, i
 
 void ts_iterative_map_building(ts_sensor_data_t *sd, ts_state_t *state)
 {
-    
-    state->position.theta = 0;//sd->d[7];
+    //Update tetha
+    state->position.theta = sd->theta;
 
+	// Translate distance detection to robot coordinate system
     ts_build_scan(sd, &state->scan, state);
 	printf("Scan 1, x: %f, y: %f\n",state->scan.x[0],state->scan.y[0]);
-    // Monte Carlo search
-    
-    state->position = ts_monte_carlo_search(&state->randomizer, &state->scan, state->map, &state->position, state->sigma_xy, state->sigma_theta, 1000, NULL);
+	printf("Scan 2, x: %f, y: %f\n",state->scan.x[1],state->scan.y[1]);
+	printf("Scan 3, x: %f, y: %f\n",state->scan.x[2],state->scan.y[2]);
+	printf("Scan 4, x: %f, y: %f\n",state->scan.x[3],state->scan.y[3]);
+	printf("Scan 5, x: %f, y: %f\n",state->scan.x[4],state->scan.y[4]);
+	printf("Scan 6, x: %f, y: %f\n",state->scan.x[5],state->scan.y[5]);
+	printf("Scan 7, x: %f, y: %f\n",state->scan.x[6],state->scan.y[6]);   
+ 
+	// Monte Carlo search
+    //state->position = ts_monte_carlo_search(&state->randomizer, &state->scan, state->map, &state->position, state->sigma_xy, state->sigma_theta, 1000, NULL);
 	
 	printf("Position: x: %f, y:%f, theta: %f\n",state->position.x,state->position.y,state->position.theta);  	
 	
@@ -220,5 +253,31 @@ void ts_iterative_map_building(ts_sensor_data_t *sd, ts_state_t *state)
     state->timestamp = sd->timestamp;
 }
 
+void
+ts_save_map_pgm(ts_map_t *map, ts_map_t *overlay, char *filename, int width, int height)
+{
+    int x, y, xp, yp;
+    FILE *output;
+    output = fopen(filename, "wt");
+    fprintf(output, "P2\n%d %d 255\n", width, height);
+    y = (TS_MAP_SIZE - height) / 2;
+    for (yp = 0; yp < height; y++, yp++) {
+        x = (TS_MAP_SIZE - width) / 2; 
+		for (xp = 0; xp < width; x++, xp++) {
+	    	if (overlay->map[ (TS_MAP_SIZE - 1 - y) * TS_MAP_SIZE + x] == 0) 
+			{            
+			    fprintf(output, "0 ");
+				//printf("0");
+			}            
+			else
+			{ 
+                fprintf(output, "%d ", (int)(map->map[ (TS_MAP_SIZE - 1 - y) * TS_MAP_SIZE + x]) >> 8);
+				//printf("%d",(int)(map->map[ (TS_MAP_SIZE - 1 - y) * TS_MAP_SIZE + x]) >> 5);
+			}		
+		}
+		fprintf(output, "\n");
+    }
+    fclose(output);
+}
 
 
