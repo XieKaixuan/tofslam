@@ -34,7 +34,7 @@ void *get_udp(void *vargp){
     
 	
     while(1){
-        printf("Waiting data\n");
+        //printf("Waiting data\n");
         if((recvfrom (sock, (char *)&buffer, sizeof(buffer), 0, (struct sockaddr *)&client, &lenclient))==-1)
         {
             perror("receive");
@@ -43,7 +43,13 @@ void *get_udp(void *vargp){
         sem_wait(&sem_data);
 
         sscanf(buffer,"%d,%d,%d,%d,%d,%d,%d,%d\n",&data.laser1,&data.laser2,&data.laser3,&data.laser4,&data.laser5,&data.laser6,&data.laser7,&data.imu_yaw);	
-		
+	
+		// Optional!!!!!
+		//data.laser2 = data.laser3;
+		//data.laser3 = data.laser5;
+
+		new_data = 1;
+
 		sem_post(&sem_data);
 	}
 

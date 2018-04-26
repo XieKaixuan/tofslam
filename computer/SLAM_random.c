@@ -70,7 +70,7 @@ double ts_random_normal_fix(ts_randomizer_t *d)
             return x;
         // Start all over		
         d->hz=SHR3(d);		
-        d->iz=d->hz&63;		
+        d->iz=d->hz&127;		
         if((unsigned long)abs(d->hz)<d->kn[d->iz]) 
             return (d->hz*d->wn[d->iz]);	
     }   
@@ -83,21 +83,35 @@ ts_position_t ts_monte_carlo_search(ts_randomizer_t *randomizer, ts_scan_t *scan
     int bestdist, lastbestdist;
     int counter = 0, debug = 0;
 
+	// variables to print the particles
+	ts_map_t *particles, particles_struct;
+	particles = &particles_struct;
+	ts_map_pixel_t *particle_ptr;
+	ts_map_init(particles);
+
     if (stop < 0) {
         debug = 1;
         stop = -stop;
     }
+
     currentpos = bestpos = lastbestpos = *start_pos;
     currentdist = ts_distance_scan_to_map(scan, map, &currentpos);
-	printf("Best dist: %d\n",currentdist);    
+	
 	bestdist = lastbestdist = currentdist;
-    
 	do {
 		currentpos = lastbestpos;
-		currentpos.x = ts_random_normal(randomizer, currentpos.x, sigma_xy);
-		currentpos.y = ts_random_normal(randomizer, currentpos.y, sigma_xy);
-	  	//currentpos.theta = ts_random_normal(randomizer, currentpos.theta, sigma_theta);
-		//printf("Randomized: %f\n",currentpos.x);
+		//currentpos.x = ts_random_normal(randomizer, currentpos.x, sigma_xy)/10;
+		//currentpos.x *= 10;
+		currentpos.y = (ts_random_normal(randomizer, currentpos.y, sigma_xy)+4)/10;
+		currentpos.y *= 10;
+		//currentpos.theta = ts_random_normal(randomizer, currentpos.theta, sigma_theta);
+
+		particle_ptr = particles->map + currentpos.y * TS_MAP_SIZE + currentpos.x;
+
+		*particle_ptr = (int)0;	
+		
+	  	
+		//printf("Generated x: %d\n",currentpos.x);
 		//printf("Randomized: %f\n",currentpos.y);
 		//printf("Randomized: %f\n",currentpos.theta);
 	
@@ -121,6 +135,9 @@ ts_position_t ts_monte_carlo_search(ts_randomizer_t *randomizer, ts_scan_t *scan
 			}
 		}
     } while (counter < stop);
+	// Print partiles
+	//ts_save_map_pgm(particles, particles, "random", TS_MAP_SIZE,TS_MAP_SIZE);	
+	printf("Best dist: %d\n",bestdist);    
     if (bd)
         *bd = bestdist;
     return bestpos;

@@ -1,16 +1,18 @@
 #include <tofslam.h>
 
+int first_yaw = 1000;
+
 void set_params(ts_laser_parameters_t *laser_params)
 {
 	laser_params->offset = (double)25/2; // diameter/2 in mm
-    laser_params->angle[0] = -135*M_PI/180;
-    laser_params->angle[1] = -90*M_PI/180;
-    laser_params->angle[2] = -45*M_PI/180;
-    laser_params->angle[3] = 0*M_PI/180;
-    laser_params->angle[4] = 45*M_PI/180;
-    laser_params->angle[5] = 90*M_PI/180;
-    laser_params->angle[6] = 135*M_PI/180;
-    laser_params->angle[7] = 180*M_PI/180;
+    laser_params->angle[0] = 90*M_PI/180;
+    laser_params->angle[1] = 45*M_PI/180;
+    laser_params->angle[2] = 0*M_PI/180;
+    laser_params->angle[3] = -45*M_PI/180;
+    laser_params->angle[4] = -90*M_PI/180;
+    laser_params->angle[5] = -135*M_PI/180;
+    laser_params->angle[6] = -180*M_PI/180;
+    laser_params->angle[7] = 135*M_PI/180;
     laser_params->distance_no_detection = 2000;
 	printf("Params set\n");
 }
@@ -55,22 +57,26 @@ void ts_state_init(ts_state_t *state, ts_map_t *map, ts_laser_parameters_t *lase
 void ts_build_scan(ts_sensor_data_t *sd, ts_scan_t *scan, ts_state_t *state)
 {
 	int i=0;
-	float offsetx, offsety;
+
 	for(i=0;i<TS_SCAN_SIZE;i++)
 	{
 		
 		if(sd->d[i] >= state->laser_params.distance_no_detection)
 		{
-			scan->x[i] = (state->laser_params.distance_no_detection * cos(state->laser_params.angle[i])) + state->laser_params.offset * cos(state->laser_params.angle[i]);
-		    scan->y[i] = (state->laser_params.distance_no_detection * sin(state->laser_params.angle[i])) + state->laser_params.offset * sin(state->laser_params.angle[i]);
+			scan->x[i] = ((state->laser_params.distance_no_detection + state->laser_params.offset) * cos(state->laser_params.angle[i])) + 4;
+		    scan->y[i] = ((state->laser_params.distance_no_detection + state->laser_params.offset) * sin(state->laser_params.angle[i])) + 4;
 			scan->value[i] = TS_NO_OBSTACLE;
 		}
 		else if(sd->d[i] > state->hole_width / 2)
 		{
-		    scan->x[i] = (sd->d[i] * cos(state->laser_params.angle[i])) + state->laser_params.offset * cos(state->laser_params.angle[i]);
-		    scan->y[i] = (sd->d[i] * sin(state->laser_params.angle[i])) + state->laser_params.offset * sin(state->laser_params.angle[i]);
+		    scan->x[i] = ((sd->d[i] + state->laser_params.offset) * cos(state->laser_params.angle[i])) + 4;
+		    scan->y[i] = ((sd->d[i] + state->laser_params.offset) * sin(state->laser_params.angle[i])) + 4;
 		    scan->value[i] = TS_OBSTACLE;
 		}
+		scan->x[i]/=10;
+		scan->y[i]/=10;
+		scan->x[i]*=10;
+		scan->y[i]*=10;
 	}
 }
 
@@ -98,7 +104,7 @@ int ts_distance_scan_to_map(ts_scan_t *scan, ts_map_t *map, ts_position_t *pos)
     }
     if (nb_points) 
 	{
-		sum = sum * 1024 / nb_points;
+		sum = sum / nb_points;//* 1024 / nb_points;
 	}else{ 
 		sum = 2000000000;
 	}
@@ -209,7 +215,7 @@ ts_map_update(ts_scan_t *scan, ts_map_t *map, ts_position_t *pos, int quality, i
         yp = (int)floor((pos->y + y2p) * TS_MAP_SCALE + 0.5);
         dist = sqrt(x2p * x2p + y2p * y2p); //Distance from obstacles to robot position
         add = hole_width / 2 / dist;
-		printf("ADD = %f\n", add);
+		//printf("ADD = %f\n", add);
         x2p *= TS_MAP_SCALE * (1 + add); //Position of obstacles in global system with respect to robot position
         y2p *= TS_MAP_SCALE * (1 + add); 
         x2 = (int)floor(pos->x * TS_MAP_SCALE + x2p + 0.5); //Position of obstacles in global system with respect to reference point and adding some dependance with the distance from obstacle to robot
@@ -221,33 +227,39 @@ ts_map_update(ts_scan_t *scan, ts_map_t *map, ts_position_t *pos, int quality, i
             q = quality;
             value = TS_OBSTACLE;
         }
-        printf("%d %d %d %d %d %d %d\n", i, x1, y1, x2, y2, xp, yp);
+        /*printf("%d %d %d %d %d %d %d\n", i, x1, y1, x2, y2, xp, yp);*/
         ts_map_laser_ray(map, x1, y1, x2, y2, xp, yp, value, q);
     }
 }
 
 void ts_iterative_map_building(ts_sensor_data_t *sd, ts_state_t *state)
 {
+	//relative yaw
+	
+	if(first_yaw == 1000)
+		first_yaw = sd->theta;
     //Update tetha
-    state->position.theta = sd->theta;
+    //state->position.theta = -(sd->theta-first_yaw);
 
+	printf("Yaw: %d\n",sd->theta);
 	// Translate distance detection to robot coordinate system
     ts_build_scan(sd, &state->scan, state);
-	printf("Scan 1, x: %f, y: %f\n",state->scan.x[0],state->scan.y[0]);
-	printf("Scan 2, x: %f, y: %f\n",state->scan.x[1],state->scan.y[1]);
-	printf("Scan 3, x: %f, y: %f\n",state->scan.x[2],state->scan.y[2]);
-	printf("Scan 4, x: %f, y: %f\n",state->scan.x[3],state->scan.y[3]);
-	printf("Scan 5, x: %f, y: %f\n",state->scan.x[4],state->scan.y[4]);
-	printf("Scan 6, x: %f, y: %f\n",state->scan.x[5],state->scan.y[5]);
-	printf("Scan 7, x: %f, y: %f\n",state->scan.x[6],state->scan.y[6]);   
- 
+	/*printf("Scan 1, x: %d, y: %d\n",state->scan.x[0],state->scan.y[0]);
+	printf("Scan 2, x: %d, y: %d\n",state->scan.x[1],state->scan.y[1]);
+	printf("Scan 3, x: %d, y: %d\n",state->scan.x[2],state->scan.y[2]);
+	printf("Scan 4, x: %d, y: %d\n",state->scan.x[3],state->scan.y[3]);
+	printf("Scan 5, x: %d, y: %d\n",state->scan.x[4],state->scan.y[4]);
+	printf("Scan 6, x: %d, y: %d\n",state->scan.x[5],state->scan.y[5]);
+	printf("Scan 7, x: %d, y: %d\n",state->scan.x[6],state->scan.y[6]);   
+ 	*/
 	// Monte Carlo search
-    //state->position = ts_monte_carlo_search(&state->randomizer, &state->scan, state->map, &state->position, state->sigma_xy, state->sigma_theta, 1000, NULL);
-	
-	printf("Position: x: %f, y:%f, theta: %f\n",state->position.x,state->position.y,state->position.theta);  	
+    state->position = ts_monte_carlo_search(&state->randomizer, &state->scan, state->map, &state->position, state->sigma_xy, state->sigma_theta, 1000, NULL);
+		
+
+	printf("Position: x: %d, y:%d, theta: %d\n",state->position.x,state->position.y,state->position.theta);  	
 	
     // Map update
-    ts_map_update(&state->scan, state->map, &state->position, 50, state->hole_width);
+    ts_map_update(&state->scan, state->map, &state->position, 10, state->hole_width);
 
     // Prepare next step
     state->timestamp = sd->timestamp;
@@ -279,5 +291,34 @@ ts_save_map_pgm(ts_map_t *map, ts_map_t *overlay, char *filename, int width, int
     }
     fclose(output);
 }
+
+void
+ts_save_position(ts_position_t position, ts_map_t *map, char *filename, int width, int height)
+{
+    int x, y, xp, yp;
+    FILE *output;
+    output = fopen(filename, "wt");
+    fprintf(output, "P2\n%d %d 255\n", width, height);
+
+    y = (TS_MAP_SIZE - height) / 2;
+    for (yp = 0; yp < height; y++, yp++) {
+        x = (TS_MAP_SIZE - width) / 2; 
+		for (xp = 0; xp < width; x++, xp++) {
+	    	if ((x == position.x) && (y == position.y)) 
+			{            
+			    fprintf(output, "0 ");
+				//printf("0");
+			}       
+			else
+			{
+				fgetc(output);
+			}     
+					
+		}
+		fprintf(output, "\n");
+    }
+    fclose(output);
+}
+
 
 
