@@ -12,7 +12,7 @@ void get_data(void *pvParameters)
 		data = get_sensor_data();
 		data_to_send = 1;
 		xSemaphoreGive(sem_data);
-		vTaskDelay(500 / portTICK_PERIOD_MS);
+		vTaskDelay(1 / portTICK_PERIOD_MS);
     }
 	
 }	
@@ -63,7 +63,16 @@ sensor_data get_sensor_data(){
 	vTaskDelay(1);
 	received_data_lsb=spi_transfer_8(1,0);
 	data.imu_yaw=((int)((received_data_msb << 8) | received_data_lsb));
-	
+
+	printf("Laser 1: %d\n",data.laser1);
+	printf("Laser 2: %d\n",data.laser2);
+	printf("Laser 3: %d\n",data.laser3);
+	printf("Laser 4: %d\n",data.laser4);
+	printf("Laser 5: %d\n",data.laser5);
+	printf("Laser 6: %d\n",data.laser6);
+	printf("Laser 7: %d\n",data.laser7);
+	printf("Yaw: %d\n",data.imu_yaw);	
+
 	return data;
 }
 	
