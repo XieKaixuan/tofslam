@@ -35,7 +35,7 @@ void send_data(void *pvParameters){
 		if(data_to_send == 1)
 		{
 			data_to_send = 0;
-		    sprintf(msg,"%d,%d,%d,%d,%d,%d,%d,%d\n",data.laser1,data.laser2,data.laser3,data.laser4,data.laser5,data.laser6,data.laser7,data.imu_yaw);        
+		    sprintf(msg,"%d,%d,%d,%d,%d,%d,%d,%d,%d\n",data.laser1,data.laser2,data.laser3,data.laser4,data.laser5,data.laser6,data.laser7,data.laser8,data.imu_yaw);        
 
 		    struct netbuf* buf = netbuf_new();
 		    void* data = netbuf_alloc(buf, strlen(msg));

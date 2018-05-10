@@ -42,7 +42,7 @@ void *get_udp(void *vargp){
         }
         sem_wait(&sem_data);
 
-        sscanf(buffer,"%d,%d,%d,%d,%d,%d,%d,%d\n",&data.laser1,&data.laser2,&data.laser3,&data.laser4,&data.laser5,&data.laser6,&data.laser7,&data.imu_yaw);	
+        sscanf(buffer,"%d,%d,%d,%d,%d,%d,%d,%d,%d\n",&data.laser1,&data.laser2,&data.laser3,&data.laser4,&data.laser5,&data.laser6,&data.laser7,&data.laser8,&data.imu_yaw);	
 	
 		// Optional!!!!!
 		//data.laser2 = data.laser3;

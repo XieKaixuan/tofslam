@@ -61,6 +61,11 @@ sensor_data get_sensor_data(){
 	vTaskDelay(1);
 	received_data_msb=spi_transfer_8(1,80);
 	vTaskDelay(1);
+	received_data_lsb=spi_transfer_8(1,80);
+	data.laser8=(int)((received_data_msb << 8) | received_data_lsb);
+	vTaskDelay(1);
+	received_data_msb=spi_transfer_8(1,80);
+	vTaskDelay(1);
 	received_data_lsb=spi_transfer_8(1,0);
 	data.imu_yaw=((int)((received_data_msb << 8) | received_data_lsb));
 
@@ -71,6 +76,7 @@ sensor_data get_sensor_data(){
 	printf("Laser 5: %d\n",data.laser5);
 	printf("Laser 6: %d\n",data.laser6);
 	printf("Laser 7: %d\n",data.laser7);
+	printf("Laser 8: %d\n",data.laser8);
 	printf("Yaw: %d\n",data.imu_yaw);	
 
 	return data;
@@ -93,9 +99,8 @@ void show_data(void *pvParameters)
     		printf("Received 5: %f\n",data.laser5);
     		printf("Received 6: %f\n",data.laser6);
     		printf("Received 7: %f\n",data.laser7);
+			printf("Received 8: %f\n",data.laser8);
     		printf("Received yaw: %f\n",data.imu_yaw);
-    		printf("Received pitch: %f\n",data.imu_pitch);
-    		printf("Received roll: %f\n",data.imu_roll);
 			xSemaphoreGive(sem_data);
 			vTaskDelay(1000 / portTICK_PERIOD_MS);
 		}

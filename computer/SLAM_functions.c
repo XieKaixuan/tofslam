@@ -48,8 +48,8 @@ void ts_state_init(ts_state_t *state, ts_map_t *map, ts_laser_parameters_t *lase
 	state->distance = 0;
 	state->done = 0;
 	state->hole_width = hole_width;
-	state->sigma_xy = 0.000000005; //Check why I need to use such a little value
-	state->sigma_theta = 0;
+	state->sigma_xy = 0.0000000005; //Check why I need to use such a little value
+	state->sigma_theta = 0.0000000001;
 	printf("State initiated\n");
 }
 
@@ -75,8 +75,8 @@ void ts_build_scan(ts_sensor_data_t *sd, ts_scan_t *scan, ts_state_t *state)
 		}
 		scan->x[i]/=10;
 		scan->y[i]/=10;
-		scan->x[i]*=10;
-		scan->y[i]*=10;
+		//scan->x[i]*=10;
+		//scan->y[i]*=10;
 	}
 }
 
@@ -221,7 +221,7 @@ ts_map_update(ts_scan_t *scan, ts_map_t *map, ts_position_t *pos, int quality, i
         x2 = (int)floor(pos->x * TS_MAP_SCALE + x2p + 0.5); //Position of obstacles in global system with respect to reference point and adding some dependance with the distance from obstacle to robot
         y2 = (int)floor(pos->y * TS_MAP_SCALE + y2p + 0.5);
         if (scan->value[i] == TS_NO_OBSTACLE) { 
-            q = quality / 4;
+            q = quality;// / 4;
             value = TS_NO_OBSTACLE;
         } else {
             q = quality;
@@ -239,19 +239,13 @@ void ts_iterative_map_building(ts_sensor_data_t *sd, ts_state_t *state)
 	if(first_yaw == 1000)
 		first_yaw = sd->theta;
     //Update tetha
+	state->position.theta = 0;
     //state->position.theta = -(sd->theta-first_yaw);
-
 	printf("Yaw: %d\n",sd->theta);
+	
 	// Translate distance detection to robot coordinate system
     ts_build_scan(sd, &state->scan, state);
-	/*printf("Scan 1, x: %d, y: %d\n",state->scan.x[0],state->scan.y[0]);
-	printf("Scan 2, x: %d, y: %d\n",state->scan.x[1],state->scan.y[1]);
-	printf("Scan 3, x: %d, y: %d\n",state->scan.x[2],state->scan.y[2]);
-	printf("Scan 4, x: %d, y: %d\n",state->scan.x[3],state->scan.y[3]);
-	printf("Scan 5, x: %d, y: %d\n",state->scan.x[4],state->scan.y[4]);
-	printf("Scan 6, x: %d, y: %d\n",state->scan.x[5],state->scan.y[5]);
-	printf("Scan 7, x: %d, y: %d\n",state->scan.x[6],state->scan.y[6]);   
- 	*/
+ 	
 	// Monte Carlo search
     state->position = ts_monte_carlo_search(&state->randomizer, &state->scan, state->map, &state->position, state->sigma_xy, state->sigma_theta, 1000, NULL);
 		

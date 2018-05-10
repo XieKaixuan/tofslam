@@ -32,8 +32,6 @@ typedef struct{
 	int laser6;
 	int laser7;
 	int laser8;
-	int laser9;
-	int laser10;
 	int imu_yaw;
 	int imu_pitch;
 	int imu_roll;

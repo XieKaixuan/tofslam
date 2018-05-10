@@ -20,8 +20,6 @@ typedef struct{
 	int laser6;
 	int laser7;
 	int laser8;
-	int laser9;
-	int laser10;
 	int imu_yaw;
 	int imu_pitch;
 	int imu_roll;
@@ -29,9 +27,11 @@ typedef struct{
 
 extern sem_t sem_data;
 extern sensor_data data;
+extern int new_data;
 
 void *get_udp(void *vargp);
 void *slam(void *vargp);
+
 
 #endif // _HEADERS
 
@@ -45,7 +45,7 @@ void *slam(void *vargp);
 #define TS_SCAN_SIZE 8
 #define TS_MAP_SIZE 100
 #define TS_MAP_SCALE 1
-#define TS_NO_OBSTACLE 2500
+#define TS_NO_OBSTACLE 65500
 #define TS_OBSTACLE 0
 
 typedef unsigned short ts_map_pixel_t;
@@ -55,24 +55,25 @@ typedef struct {
 } ts_map_t;
 
 typedef struct {
-    double x[TS_SCAN_SIZE], y[TS_SCAN_SIZE];
+    int x[TS_SCAN_SIZE], y[TS_SCAN_SIZE];
     int value[TS_SCAN_SIZE];
 } ts_scan_t;
 
 typedef struct {
-    double x, y;    // in mm
-    double theta;   // in degrees
+    int x, y;    // in mm
+    int theta;   // in degrees
 } ts_position_t;
 
 typedef struct {
     unsigned int timestamp;
-    float d[TS_SCAN_SIZE];
+    int d[TS_SCAN_SIZE];
+	int theta;
 } ts_sensor_data_t;
 
 typedef struct {
-    double offset;  // position of the laser wrt center of rotation
-    double angle[8];  // angle for scan
-    double distance_no_detection; // default value when the laser returns 0
+    float offset;  // position of the laser wrt center of rotation
+    float angle[8];  // angle for scan
+    int distance_no_detection; // default value when the laser returns 0
 } ts_laser_parameters_t;
 
 typedef struct {
@@ -102,6 +103,9 @@ typedef struct {
 
 
 
+void set_params(ts_laser_parameters_t *laser_params);
+void set_init_pos(ts_position_t *position);
+
 void ts_state_init(ts_state_t *state, ts_map_t *map, ts_laser_parameters_t *laser_params, ts_position_t *position, int hole_width);
 void ts_build_scan(ts_sensor_data_t *sd, ts_scan_t *scan, ts_state_t *state);
 void ts_map_init(ts_map_t *map);
@@ -114,5 +118,7 @@ ts_position_t ts_monte_carlo_search(ts_randomizer_t *randomizer, ts_scan_t *scan
 double ts_random_normal(ts_randomizer_t *d, double m, double s);
 double ts_random_normal_fix(ts_randomizer_t *d);
 static unsigned long SHR3(ts_randomizer_t *d);
+
+void ts_save_map_pgm(ts_map_t *map, ts_map_t *overlay, char *filename, int width, int height);
 
 #endif // _TINYSLAM_H_

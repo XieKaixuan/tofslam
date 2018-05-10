@@ -23,7 +23,7 @@ void *slam(void *vargp){
 	set_params(laser_params);
 	set_init_pos(position);
     ts_map_init(map);
-    ts_state_init(state, map, laser_params, position, 20); //ts_state_init(state, map, laser_params, position, hole_width);
+    ts_state_init(state, map, laser_params, position, 7); //ts_state_init(state, map, laser_params, position, hole_width);
     unsigned long jsrseed = 1 ;
     ts_random_init(&state->randomizer,jsrseed);
 	int count = 0;
@@ -45,6 +45,7 @@ void *slam(void *vargp){
 				sd->d[4] = data.laser5;
 				sd->d[5] = data.laser6;
 				sd->d[6] = data.laser7;
+				sd->d[7] = data.laser8;
 				sd->theta = data.imu_yaw;
 				sd->timestamp += 1;		
 				sem_post(&sem_data);

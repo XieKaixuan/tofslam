@@ -100,10 +100,9 @@ ts_position_t ts_monte_carlo_search(ts_randomizer_t *randomizer, ts_scan_t *scan
 	bestdist = lastbestdist = currentdist;
 	do {
 		currentpos = lastbestpos;
-		//currentpos.x = ts_random_normal(randomizer, currentpos.x, sigma_xy)/10;
+		currentpos.x = ts_random_normal(randomizer, currentpos.x, sigma_xy);
 		//currentpos.x *= 10;
-		currentpos.y = (ts_random_normal(randomizer, currentpos.y, sigma_xy)+4)/10;
-		currentpos.y *= 10;
+		currentpos.y = ts_random_normal(randomizer, currentpos.y, sigma_xy);
 		//currentpos.theta = ts_random_normal(randomizer, currentpos.theta, sigma_theta);
 
 		particle_ptr = particles->map + currentpos.y * TS_MAP_SIZE + currentpos.x;
@@ -136,7 +135,7 @@ ts_position_t ts_monte_carlo_search(ts_randomizer_t *randomizer, ts_scan_t *scan
 		}
     } while (counter < stop);
 	// Print partiles
-	//ts_save_map_pgm(particles, particles, "random", TS_MAP_SIZE,TS_MAP_SIZE);	
+	ts_save_map_pgm(particles, particles, "random", TS_MAP_SIZE,TS_MAP_SIZE);	
 	printf("Best dist: %d\n",bestdist);    
     if (bd)
         *bd = bestdist;
