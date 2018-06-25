@@ -6,6 +6,10 @@
 
 void send_data(void *pvParameters){
 
+	TickType_t xLastWakeTime;
+ 	const TickType_t xFrequency = 30/ portTICK_PERIOD_MS;
+	int number = 1;
+	uint32_t now = 0, lastUpdate = 0;
     char msg[100];
     err_t err;
 
@@ -29,14 +33,25 @@ void send_data(void *pvParameters){
     }
 
     printf("Socket created\n");
+	xLastWakeTime = xTaskGetTickCount(); // Get current time
+
     while(1)
     {
-		xSemaphoreTake(sem_data,0);
+		xSemaphoreTake(sem_processed_data,0);
 		if(data_to_send == 1)
 		{
-			data_to_send = 0;
-		    sprintf(msg,"%d,%d,%d,%d,%d,%d,%d,%d,%d\n",data.laser1,data.laser2,data.laser3,data.laser4,data.laser5,data.laser6,data.laser7,data.laser8,data.imu_yaw);        
 
+			// To check periodicity
+			//now = sdk_system_get_time();
+			/*lastUpdate = now - lastUpdate;
+			printf("%d since last enter\n",lastUpdate);	
+			lastUpdate = now;*/
+
+			data_to_send = 0;
+			int imu_yaw = 0;
+		    sprintf(msg,"%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n",data_processed.laser1,data_processed.laser2,data_processed.laser3,data_processed.laser4,data_processed.laser5,data_processed.laser6,data_processed.laser7,data_processed.laser8,data_processed.yaw,number);        
+			number += 1;
+			printf("Number: %d\n",number);
 		    struct netbuf* buf = netbuf_new();
 		    void* data = netbuf_alloc(buf, strlen(msg));
 
@@ -44,12 +59,13 @@ void send_data(void *pvParameters){
 		    err = netconn_send(conn, buf);
 
 		    if (err != ERR_OK) {
-		                printf("%s : Could not send data!!! (%s)\n", __FUNCTION__, lwip_strerr(err));
+		                //printf("%s : Could not send data!!! (%s)\n", __FUNCTION__, lwip_strerr(err));
 		    }
-		    printf("Sensor data sent over UDP Wifi\n");
+		    //printf("Sensor data sent over UDP Wifi\n");
 		    netbuf_delete(buf); // De-allocate packet buffer
 		}
-		xSemaphoreGive(sem_data);
+		xSemaphoreGive(sem_processed_data);	
+		vTaskDelayUntil( &xLastWakeTime, xFrequency ); // Espera de 30 milisegundos para tener nuevos datos a una tasa de 33 Hz
     }
 
     err = netconn_disconnect(conn);

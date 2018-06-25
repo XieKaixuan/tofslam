@@ -1,5 +1,3 @@
-//http://www.chuidiang.org/clinux/sockets/udp/udp.php
-
 #include "tofslam.h"
 
 // Variables to be used
@@ -10,7 +8,7 @@ int new_data = 0;
 void main(void){
 
 	// Create semaphore
-	sem_init(&sem_data, 0, 1);
+	sem_init(&sem_data, 0, 1); // To protect data structure
 
 	// Create both threads
 	pthread_t tid[2];
@@ -26,7 +24,8 @@ void main(void){
 		printf("Error creating SLAM thread\n");
 		return;
 	}
-	// Wait for the threads
+
+	// Wait for the threads to finish
 	pthread_join(tid[0],NULL);
     pthread_join(tid[1],NULL);
 	

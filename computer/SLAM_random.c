@@ -136,7 +136,7 @@ ts_position_t ts_monte_carlo_search(ts_randomizer_t *randomizer, ts_scan_t *scan
     } while (counter < stop);
 	// Print partiles
 	ts_save_map_pgm(particles, particles, "random", TS_MAP_SIZE,TS_MAP_SIZE);	
-	printf("Best dist: %d\n",bestdist);    
+	//printf("Best dist: %d\n",bestdist);    
     if (bd)
         *bd = bestdist;
     return bestpos;

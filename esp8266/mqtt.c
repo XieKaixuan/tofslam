@@ -135,6 +135,10 @@ void  mqtt_task(void *pvParameters)
 
 void  wifi_task(void *pvParameters)
 {
+	TickType_t xLastWakeTime;
+ 	const TickType_t xFrequency = 1000/ portTICK_PERIOD_MS;
+
+
     uint8_t status  = 0;
     uint8_t retries = 30;
     struct sdk_station_config config = {
@@ -142,30 +146,31 @@ void  wifi_task(void *pvParameters)
         .password = WIFI_PASS,
     };
 
-    printf("WiFi: connecting to WiFi\n\r");
+    //printf("WiFi: connecting to WiFi\n\r");
     sdk_wifi_set_opmode(STATION_MODE);
     sdk_wifi_station_set_config(&config);
 
+	xLastWakeTime = xTaskGetTickCount(); // Get current time
     while(1)
     {
         while ((status != STATION_GOT_IP) && (retries)){
             status = sdk_wifi_station_get_connect_status();
-            printf("%s: status = %d\n\r", __func__, status );
+            //printf("%s: status = %d\n\r", __func__, status );
             if( status == STATION_WRONG_PASSWORD ){
-                printf("WiFi: wrong password\n\r");
+                //printf("WiFi: wrong password\n\r");
                 break;
             } else if( status == STATION_NO_AP_FOUND ) {
-                printf("WiFi: AP not found\n\r");
+                //printf("WiFi: AP not found\n\r");
                 break;
             } else if( status == STATION_CONNECT_FAIL ) {
-                printf("WiFi: connection failed\r\n");
+                //printf("WiFi: connection failed\r\n");
                 break;
             }
-            vTaskDelay( 1000 / portTICK_PERIOD_MS );
+            vTaskDelayUntil( &xLastWakeTime, xFrequency ); // Espera de 1000 milisegundos para tener nuevos datos a una tasa de 1 Hz
             --retries;
         }
         if (status == STATION_GOT_IP) {
-            printf("WiFi: Connected\n\r");
+            //printf("WiFi: Connected\n\r");
             xSemaphoreGive( wifi_alive );
             taskYIELD();
         }
@@ -174,9 +179,9 @@ void  wifi_task(void *pvParameters)
             xSemaphoreGive( wifi_alive );
             taskYIELD();
         }
-        printf("WiFi: disconnected\n\r");
+        //printf("WiFi: disconnected\n\r");
         sdk_wifi_station_disconnect();
-        vTaskDelay( 1000 / portTICK_PERIOD_MS );
+        vTaskDelayUntil( &xLastWakeTime, xFrequency ); // Espera de 1000 milisegundos para tener nuevos datos a una tasa de 1 Hz
     }
 }
 

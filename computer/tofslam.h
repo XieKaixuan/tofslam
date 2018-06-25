@@ -23,6 +23,7 @@ typedef struct{
 	int imu_yaw;
 	int imu_pitch;
 	int imu_roll;
+	int number;
 }sensor_data;
 
 extern sem_t sem_data;
@@ -43,7 +44,7 @@ void *slam(void *vargp);
 #endif
 
 #define TS_SCAN_SIZE 8
-#define TS_MAP_SIZE 100
+#define TS_MAP_SIZE 1000
 #define TS_MAP_SCALE 1
 #define TS_NO_OBSTACLE 65500
 #define TS_OBSTACLE 0
@@ -101,7 +102,7 @@ typedef struct {
     double sigma_theta;
 } ts_state_t;
 
-
+long getMicrotime();
 
 void set_params(ts_laser_parameters_t *laser_params);
 void set_init_pos(ts_position_t *position);

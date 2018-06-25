@@ -1,5 +1,6 @@
 #include <tofslam.h>
 
+
 int first_yaw = 1000;
 
 void set_params(ts_laser_parameters_t *laser_params)
@@ -36,7 +37,7 @@ void ts_map_init(ts_map_t *map)
 			//printf("Map init: %d\n",map->map[y*TS_MAP_SIZE+x]);
 		}
     }
-	printf("Map initiated\n");
+	//printf("Map initiated\n");
 }
 
 void ts_state_init(ts_state_t *state, ts_map_t *map, ts_laser_parameters_t *laser_params, ts_position_t *position, int hole_width)
@@ -48,7 +49,7 @@ void ts_state_init(ts_state_t *state, ts_map_t *map, ts_laser_parameters_t *lase
 	state->distance = 0;
 	state->done = 0;
 	state->hole_width = hole_width;
-	state->sigma_xy = 0.0000000005; //Check why I need to use such a little value
+	state->sigma_xy = 0.000000001; //Check why I need to use such a little value
 	state->sigma_theta = 0.0000000001;
 	printf("State initiated\n");
 }
@@ -61,25 +62,25 @@ void ts_build_scan(ts_sensor_data_t *sd, ts_scan_t *scan, ts_state_t *state)
 	for(i=0;i<TS_SCAN_SIZE;i++)
 	{
 		
-		if(sd->d[i] >= state->laser_params.distance_no_detection)
+		if(sd->d[i] >= state->laser_params.distance_no_detection) //in case we haven't a detection
 		{
-			scan->x[i] = ((state->laser_params.distance_no_detection + state->laser_params.offset) * cos(state->laser_params.angle[i])) + 4;
-		    scan->y[i] = ((state->laser_params.distance_no_detection + state->laser_params.offset) * sin(state->laser_params.angle[i])) + 4;
+			scan->x[i] = ((state->laser_params.distance_no_detection + state->laser_params.offset) * cos(state->laser_params.angle[i]));
+		    scan->y[i] = ((state->laser_params.distance_no_detection + state->laser_params.offset) * sin(state->laser_params.angle[i]));
 			scan->value[i] = TS_NO_OBSTACLE;
 		}
-		else if(sd->d[i] > state->hole_width / 2)
+		else if(sd->d[i] > state->hole_width / 2) //in case we have a detection
 		{
-		    scan->x[i] = ((sd->d[i] + state->laser_params.offset) * cos(state->laser_params.angle[i])) + 4;
-		    scan->y[i] = ((sd->d[i] + state->laser_params.offset) * sin(state->laser_params.angle[i])) + 4;
+		    scan->x[i] = ((sd->d[i] + state->laser_params.offset) * cos(state->laser_params.angle[i]));
+		    scan->y[i] = ((sd->d[i] + state->laser_params.offset) * sin(state->laser_params.angle[i]));
 		    scan->value[i] = TS_OBSTACLE;
 		}
-		scan->x[i]/=10;
+		scan->x[i]/=10; // We don't need mm precision
 		scan->y[i]/=10;
-		//scan->x[i]*=10;
-		//scan->y[i]*=10;
+		
 	}
 }
 
+// This function provide the likelyhood between position and map
 int ts_distance_scan_to_map(ts_scan_t *scan, ts_map_t *map, ts_position_t *pos)
 {
     double c, s;
@@ -218,10 +219,10 @@ ts_map_update(ts_scan_t *scan, ts_map_t *map, ts_position_t *pos, int quality, i
 		//printf("ADD = %f\n", add);
         x2p *= TS_MAP_SCALE * (1 + add); //Position of obstacles in global system with respect to robot position
         y2p *= TS_MAP_SCALE * (1 + add); 
-        x2 = (int)floor(pos->x * TS_MAP_SCALE + x2p + 0.5); //Position of obstacles in global system with respect to reference point and adding some dependance with the distance from obstacle to robot
+        x2 = (int)floor(pos->x * TS_MAP_SCALE + x2p + 0.5); //Position of obstacles in global system with respect to reference point and adding the half of the hole width
         y2 = (int)floor(pos->y * TS_MAP_SCALE + y2p + 0.5);
         if (scan->value[i] == TS_NO_OBSTACLE) { 
-            q = quality;// / 4;
+            q = quality / 4;
             value = TS_NO_OBSTACLE;
         } else {
             q = quality;
@@ -234,33 +235,33 @@ ts_map_update(ts_scan_t *scan, ts_map_t *map, ts_position_t *pos, int quality, i
 
 void ts_iterative_map_building(ts_sensor_data_t *sd, ts_state_t *state)
 {
-	//relative yaw
 	
-	if(first_yaw == 1000)
+	if(first_yaw == 1000) //relative yaw
 		first_yaw = sd->theta;
-    //Update tetha
-	state->position.theta = 0;
-    //state->position.theta = -(sd->theta-first_yaw);
-	printf("Yaw: %d\n",sd->theta);
+    
+	//Update tetha
+	//state->position.theta = 0;
+    state->position.theta = -(sd->theta-first_yaw);
+	//printf("Yaw: %d\n",sd->theta);
 	
 	// Translate distance detection to robot coordinate system
     ts_build_scan(sd, &state->scan, state);
  	
-	// Monte Carlo search
+	// Estimate the position based on Monte Carlo search
     state->position = ts_monte_carlo_search(&state->randomizer, &state->scan, state->map, &state->position, state->sigma_xy, state->sigma_theta, 1000, NULL);
 		
 
 	printf("Position: x: %d, y:%d, theta: %d\n",state->position.x,state->position.y,state->position.theta);  	
 	
     // Map update
-    ts_map_update(&state->scan, state->map, &state->position, 10, state->hole_width);
+    ts_map_update(&state->scan, state->map, &state->position,50, state->hole_width);
 
     // Prepare next step
     state->timestamp = sd->timestamp;
 }
 
 void
-ts_save_map_pgm(ts_map_t *map, ts_map_t *overlay, char *filename, int width, int height)
+ts_save_map_pgm(ts_map_t *map, ts_map_t *overlay, char *filename, int width, int height) 
 {
     int x, y, xp, yp;
     FILE *output;

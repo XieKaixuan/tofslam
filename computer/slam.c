@@ -1,4 +1,5 @@
 #include "tofslam.h"
+#include <time.h>
 
 void *slam(void *vargp){
 
@@ -23,50 +24,68 @@ void *slam(void *vargp){
 	set_params(laser_params);
 	set_init_pos(position);
     ts_map_init(map);
-    ts_state_init(state, map, laser_params, position, 7); //ts_state_init(state, map, laser_params, position, hole_width);
+    ts_state_init(state, map, laser_params, position, 25); //ts_state_init(state, map, laser_params, position, hole_width);
     unsigned long jsrseed = 1 ;
     ts_random_init(&state->randomizer,jsrseed);
 	int count = 0;
+
+	clock_t t_frec = 0;	
+
+	char buf;
+
 	while(1)
-	{
-		// Get data and put it in the structure sd
-		while(1)
-		{		
-			sem_wait(&sem_data);
-			if(new_data == 1)
-			{
-				new_data = 0;
-
-				//Pass data from buffer to structure of data
-				sd->d[0] = data.laser1;
-				sd->d[1] = data.laser2;
-				sd->d[2] = data.laser3;
-				sd->d[3] = data.laser4;
-				sd->d[4] = data.laser5;
-				sd->d[5] = data.laser6;
-				sd->d[6] = data.laser7;
-				sd->d[7] = data.laser8;
-				sd->theta = data.imu_yaw;
-				sd->timestamp += 1;		
-				sem_post(&sem_data);
-					
-
-				ts_iterative_map_building(sd, state);
+	{	
+		sem_wait(&sem_data);
+		if(new_data == 1)
+		{
 			
-				//if(sd->timestamp == 1)
-				ts_save_map_pgm(state->map, state->map, "map", TS_MAP_SIZE,TS_MAP_SIZE);			
+			
+			t_frec = (clock()-t_frec);
+			//printf("%.16g milisegundos\n", t_frec * 1000.0/ CLOCKS_PER_SEC);
+			t_frec = clock();
+			
+  			
+			new_data = 0;
 
-				printf("Packet: %d\n",sd->timestamp);
-				count++;
-			}
-			else
-			{
-				sem_post(&sem_data);
-			}
+			//Pass data from buffer to structure of data
+			sd->d[0] = data.laser1;
+			sd->d[1] = data.laser2;
+			sd->d[2] = data.laser3;
+			sd->d[3] = data.laser4;
+			sd->d[4] = data.laser5;
+			sd->d[5] = data.laser6;
+			sd->d[6] = data.laser7;
+			sd->d[7] = data.laser8;
+			sd->theta = data.imu_yaw;
+			sd->timestamp += 1;		
+			sem_post(&sem_data);
+
+	
+			
+
+			/*printf("Data 1 %d\t",data.laser1);
+			printf("Data 2 %d\t",data.laser2);
+			printf("Data 3 %d\t",data.laser3);
+			printf("Data 4 %d\t",data.laser4);
+			printf("Data 5 %d\t",data.laser5);
+			printf("Data 6 %d\t",data.laser6);
+			printf("Data 7 %d\t",data.laser7);
+			printf("Data 8 %d\t",data.laser8);
+			printf("Yaw %d\n",data.imu_yaw);*/
+			
+				
+			ts_iterative_map_building(sd, state);
+		
+			//if(sd->timestamp == 1)
+			ts_save_map_pgm(state->map, state->map, "map", TS_MAP_SIZE,TS_MAP_SIZE);			
 			
 		}
-		count = 0;
-		getchar();
+		else
+		{
+			sem_post(&sem_data);
+		}
+
+		
 	}
 
 	pthread_exit(NULL);
