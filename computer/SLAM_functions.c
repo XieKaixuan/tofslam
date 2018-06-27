@@ -49,7 +49,7 @@ void ts_state_init(ts_state_t *state, ts_map_t *map, ts_laser_parameters_t *lase
 	state->distance = 0;
 	state->done = 0;
 	state->hole_width = hole_width;
-	state->sigma_xy = 0.000000001; //Check why I need to use such a little value
+	state->sigma_xy = 0.000000003; //Check why I need to use such a little value
 	state->sigma_theta = 0.0000000001;
 	printf("State initiated\n");
 }
@@ -251,14 +251,16 @@ void ts_iterative_map_building(ts_sensor_data_t *sd, ts_state_t *state)
     state->position = ts_monte_carlo_search(&state->randomizer, &state->scan, state->map, &state->position, state->sigma_xy, state->sigma_theta, 1000, NULL);
 		
 
-	printf("Position: x: %d, y:%d, theta: %d\n",state->position.x,state->position.y,state->position.theta);  	
+  	
 	
     // Map update
-    ts_map_update(&state->scan, state->map, &state->position,50, state->hole_width);
+    ts_map_update(&state->scan, state->map, &state->position,100, state->hole_width);
 
     // Prepare next step
     state->timestamp = sd->timestamp;
 }
+
+
 
 void
 ts_save_map_pgm(ts_map_t *map, ts_map_t *overlay, char *filename, int width, int height) 
@@ -266,23 +268,24 @@ ts_save_map_pgm(ts_map_t *map, ts_map_t *overlay, char *filename, int width, int
     int x, y, xp, yp;
     FILE *output;
     output = fopen(filename, "wt");
-    fprintf(output, "P2\n%d %d 255\n", width, height);
+    //fprintf(output, "P2\n%d %d 255\n", width, height);
     y = (TS_MAP_SIZE - height) / 2;
     for (yp = 0; yp < height; y++, yp++) {
         x = (TS_MAP_SIZE - width) / 2; 
-		for (xp = 0; xp < width; x++, xp++) {
-	    	if (overlay->map[ (TS_MAP_SIZE - 1 - y) * TS_MAP_SIZE + x] == 0) 
-			{            
-			    fprintf(output, "0 ");
-				//printf("0");
-			}            
-			else
-			{ 
-                fprintf(output, "%d ", (int)(map->map[ (TS_MAP_SIZE - 1 - y) * TS_MAP_SIZE + x]) >> 8);
-				//printf("%d",(int)(map->map[ (TS_MAP_SIZE - 1 - y) * TS_MAP_SIZE + x]) >> 5);
-			}		
-		}
-		fprintf(output, "\n");
+        for (xp = 0; xp < width; x++, xp++) {
+            if (overlay->map[ (TS_MAP_SIZE - 1 - y) * TS_MAP_SIZE + x] == 0) 
+            {            
+                fprintf(output, "0");
+                //printf("0");
+            }            
+            else
+            { 
+                fprintf(output, "%d", (int)(map->map[ (TS_MAP_SIZE - 1 - y) * TS_MAP_SIZE + x]) >> 8);
+                //printf("%d",(int)(map->map[ (TS_MAP_SIZE - 1 - y) * TS_MAP_SIZE + x]) >> 5);
+            }   
+        fprintf(output, "\n");  
+        }
+        fprintf(output, "\n");
     }
     fclose(output);
 }

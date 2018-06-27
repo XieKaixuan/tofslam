@@ -2,7 +2,7 @@
 
 CC = gcc
 OBJECTS = SLAM_random.o SLAM_functions.o get_udp.o slam.o
-CFLAGS = -pthread -lm -I.
+CFLAGS = -pthread -lm -I. -lncurses
 
 tofslam: tofslam.o $(OBJECTS)
 	$(CC) -o tofslam tofslam.o $(OBJECTS) $(CFLAGS)

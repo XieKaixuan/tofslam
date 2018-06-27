@@ -44,7 +44,7 @@ void *slam(void *vargp);
 #endif
 
 #define TS_SCAN_SIZE 8
-#define TS_MAP_SIZE 1000
+#define TS_MAP_SIZE 500
 #define TS_MAP_SCALE 1
 #define TS_NO_OBSTACLE 65500
 #define TS_OBSTACLE 0

@@ -1,5 +1,6 @@
 #include "tofslam.h"
 #include <time.h>
+#include <ncurses.h>
 
 void *slam(void *vargp){
 
@@ -31,7 +32,16 @@ void *slam(void *vargp){
 
 	clock_t t_frec = 0;	
 
+	ts_position_t trajectory[1000], last_position;
+	int i = 0;
 	char buf;
+
+
+	initscr();
+    cbreak();
+    noecho();
+    scrollok(stdscr, TRUE);
+    nodelay(stdscr, TRUE);
 
 	while(1)
 	{	
@@ -61,7 +71,15 @@ void *slam(void *vargp){
 			sem_post(&sem_data);
 
 	
-			
+			printf("Position: x: %d, y:%d, theta: %d\n",state->position.x,state->position.y,state->position.theta);
+			if((state->position.x!=last_position.x)||(state->position.y!=last_position.y)||(state->position.theta!=last_position.theta))
+			{
+				trajectory[i++] = state->position;
+				if(i>1000)
+					i = 0;
+			}
+	
+			last_position = state->position;
 
 			/*printf("Data 1 %d\t",data.laser1);
 			printf("Data 2 %d\t",data.laser2);
@@ -79,6 +97,11 @@ void *slam(void *vargp){
 			//if(sd->timestamp == 1)
 			ts_save_map_pgm(state->map, state->map, "map", TS_MAP_SIZE,TS_MAP_SIZE);			
 			
+			if(getch()=='s')
+			{
+				printf("Pause, press a key to continue ... \n");
+				getchar();
+			}
 		}
 		else
 		{
