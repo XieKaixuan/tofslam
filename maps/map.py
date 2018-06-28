@@ -1,6 +1,7 @@
 #Import library and initialise game engine
 import pygame
 import time
+import re
 pygame.init()
 
 # Load images
@@ -56,12 +57,18 @@ while carryOn:
     
 
     # Lets print robot position	
-    pos = []
+    
     with open("/home/diego/esp_rtos/esp-open-rtos/tofslam/computer/pos",'r') as f:
         for line in f:
             if line.strip():
-                pos.append(int(line))
-    
+                pos = []
+                line = re.split(r'\t+',line)
+                pos.append(int(line[0]))
+                pos.append(int(line[1]))
+                pos.append(int(line[2]))
+                last_pos = pos
+                pygame.draw.line(screen,(255,0,0),[pos[0],pos[1]],[last_pos[0],last_pos[1]],5)  
+                #screen.set_at((pos[0], pos[1]), (255,0,0))
     #Rotate and draw robot
     rot_robot = rotate_center(robot,pos[2])
     screen.blit(rot_robot,(pos[0] - rot_robot.get_rect().center[0],pos[1] - rot_robot.get_rect().center[1]))

@@ -32,10 +32,12 @@ void *slam(void *vargp){
 
 	clock_t t_frec = 0;	
 
-	ts_position_t trajectory[1000], last_position;
 	int i = 0, print = 0;
 	char buf;
 
+	// Create a file to store trajectory
+	FILE* output = fopen("pos", "w");
+	fclose(output);
 
 	initscr();
     cbreak();
@@ -70,22 +72,13 @@ void *slam(void *vargp){
 			sd->timestamp += 1;		
 			sem_post(&sem_data);
 
-			// Store trajectory
-			if((state->position.x!=last_position.x)||(state->position.y!=last_position.y)||(state->position.theta!=last_position.theta))
-			{
-				trajectory[i++] = state->position;
-				if(i>1000)
-					i = 0;
-			}
-			last_position = state->position;
-		
 			// Iterate the algorithm	
 			ts_iterative_map_building(sd, state);
 			
 
 			print++;
 			//if(sd->timestamp == 1)
-			if(print == 6)
+			if(true)
 			{
 				printf("Position: x: %d, y:%d, theta: %d\n",state->position.x,state->position.y,state->position.theta);
 				ts_save_position(state->position.x,state->position.y,state->position.theta, state->map, "pos", TS_MAP_SIZE,TS_MAP_SIZE);

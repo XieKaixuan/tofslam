@@ -300,9 +300,9 @@ void
 ts_save_position(int x, int y, int theta, ts_map_t *map, char *filename, int width, int height)
 {
     FILE *output;
-    output = fopen(filename, "wt");
-	fprintf(output,"%d\n",x);	
-	fprintf(output,"%d\n",TS_MAP_SIZE/2-(y-TS_MAP_SIZE/2));	
+    output = fopen(filename, "a");
+	fprintf(output,"%d\t",x);	
+	fprintf(output,"%d\t",TS_MAP_SIZE/2-(y-TS_MAP_SIZE/2));	
 	fprintf(output,"%d\n",theta);	
     fclose(output);
 }
