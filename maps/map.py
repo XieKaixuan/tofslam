@@ -1,13 +1,26 @@
 #Import library and initialise game engine
 import pygame
+import time
 pygame.init()
+
+# Load images
+robot = pygame.image.load('arrow.png')
+
+def rotate_center(image, angle):
+    """rotate a Surface, maintaining position."""
+
+    loc = image.get_rect().center  #rot_image is not defined 
+    rot_image = pygame.transform.rotate(image, angle)
+    rot_image.get_rect().center = loc
+    return rot_image
 
 # Define some colors
 BLACK = ( 0, 0, 0)
 WHITE = ( 255, 255, 255)
 
 #open a new window
-size = (500,500)
+MAP_SIZE = 500
+size = (MAP_SIZE,MAP_SIZE)
 screen = pygame.display.set_mode(size)
 pygame.display.set_caption("ToF SLAM")
 
@@ -15,6 +28,8 @@ carryOn = True
 
 #Set up the clock that controls the refresh rate
 clock = pygame.time.Clock()
+
+i = 0
 
 #Start main loop
 while carryOn:
@@ -28,21 +43,32 @@ while carryOn:
     y = 0
 
     #Read the file
-    with open("/home/diego/esp_rtos/esp-open-rtos/tofslam/computer/map",'r') as f:
+    f = open("/home/diego/esp_rtos/esp-open-rtos/tofslam/computer/map",'r')
+    map = f.readlines()
+    f.close()
+    for line in map:
+        if line.strip():
+            screen.set_at((x, y), (int(line),int(line),int(line)))
+            x = x + 1
+            if x > (MAP_SIZE-1):
+                x = 0
+                y = y + 1
+    
+
+    # Lets print robot position	
+    pos = []
+    with open("/home/diego/esp_rtos/esp-open-rtos/tofslam/computer/pos",'r') as f:
         for line in f:
-        #line = f.readline()
             if line.strip():
-                screen.set_at((x, y), (int(line),int(line),int(line)))
-                x = x + 1
-                if x > 499:
-            	    x = 0
-            	    y = y + 1
-
-    #print(map[2])
-    #for x in range(0,500):
-    #    for y in range(0,500):
-    #        screen.set_at((x, y), (int(map[y*500+x].strip()),int(map[y*500+x].strip()),int(map[y*500+x].strip())))
-
+                pos.append(int(line))
+    
+    #Rotate and draw robot
+    rot_robot = rotate_center(robot,pos[2])
+    screen.blit(rot_robot,(pos[0] - rot_robot.get_rect().center[0],pos[1] - rot_robot.get_rect().center[1]))
+    
+    # Draw position   
+    #pygame.draw.line(screen,(255,0,0),[pos[0],pos[1]],[pos[0]+10,pos[1]],1)  
+   
     #screen.fill(BLACK)
 
 	#Display new frame
