@@ -267,6 +267,54 @@ ts_save_map_pgm(ts_map_t *map, ts_map_t *overlay, char *filename, int width, int
 {
     int x, y, xp, yp;
     FILE *output;
+   
+    char buffer[1000500];
+    int index = 0;
+    //fprintf(output, "P2\n%d %d 255\n", width, height);
+    y = (TS_MAP_SIZE - height) / 2;
+    for (yp = 0; yp < height; y++, yp++) {
+        x = (TS_MAP_SIZE - width) / 2; 
+        for (xp = 0; xp < width; x++, xp++) {
+            if (overlay->map[ (TS_MAP_SIZE - 1 - y) * TS_MAP_SIZE + x] == 0) 
+            {            
+                index += sprintf(&buffer[index], "0");
+                //printf("0");
+            }            
+            else
+            { 
+                index += sprintf(&buffer[index], "%d", (int)(map->map[ (TS_MAP_SIZE - 1 - y) * TS_MAP_SIZE + x]) >> 8);
+                //printf("%d",(int)(map->map[ (TS_MAP_SIZE - 1 - y) * TS_MAP_SIZE + x]) >> 5);
+            }
+            index += sprintf(&buffer[index], "\n");  
+        }
+        index += sprintf(&buffer[index], "\n");
+    }
+
+    output = fopen(filename, "w");
+    fwrite( buffer, index, 1, output );
+    fclose(output);
+}
+
+
+void
+ts_save_position(int x, int y, int theta, ts_map_t *map, char *filename, int width, int height)
+{
+    FILE *output;
+    output = fopen(filename, "wt");
+	fprintf(output,"%d\n",x);	
+	fprintf(output,"%d\n",TS_MAP_SIZE/2-(y-TS_MAP_SIZE/2));	
+	fprintf(output,"%d\n",theta);	
+    fclose(output);
+}
+
+
+
+
+/*void
+ts_save_map_pgm(ts_map_t *map, ts_map_t *overlay, char *filename, int width, int height) 
+{
+    int x, y, xp, yp;
+    FILE *output;
     output = fopen(filename, "wt");
     //fprintf(output, "P2\n%d %d 255\n", width, height);
     y = (TS_MAP_SIZE - height) / 2;
@@ -289,34 +337,4 @@ ts_save_map_pgm(ts_map_t *map, ts_map_t *overlay, char *filename, int width, int
     }
     fclose(output);
 }
-
-void
-ts_save_position(ts_position_t position, ts_map_t *map, char *filename, int width, int height)
-{
-    int x, y, xp, yp;
-    FILE *output;
-    output = fopen(filename, "wt");
-    fprintf(output, "P2\n%d %d 255\n", width, height);
-
-    y = (TS_MAP_SIZE - height) / 2;
-    for (yp = 0; yp < height; y++, yp++) {
-        x = (TS_MAP_SIZE - width) / 2; 
-		for (xp = 0; xp < width; x++, xp++) {
-	    	if ((x == position.x) && (y == position.y)) 
-			{            
-			    fprintf(output, "0 ");
-				//printf("0");
-			}       
-			else
-			{
-				fgetc(output);
-			}     
-					
-		}
-		fprintf(output, "\n");
-    }
-    fclose(output);
-}
-
-
-
+*/

@@ -33,7 +33,7 @@ void *slam(void *vargp){
 	clock_t t_frec = 0;	
 
 	ts_position_t trajectory[1000], last_position;
-	int i = 0;
+	int i = 0, print = 0;
 	char buf;
 
 
@@ -48,14 +48,14 @@ void *slam(void *vargp){
 		sem_wait(&sem_data);
 		if(new_data == 1)
 		{
+			new_data = 0;
 			
-			
-			t_frec = (clock()-t_frec);
-			//printf("%.16g milisegundos\n", t_frec * 1000.0/ CLOCKS_PER_SEC);
-			t_frec = clock();
+			/*t_frec = (clock()-t_frec);
+			printf("%.16g milisegundos\n", t_frec * 1000.0/ CLOCKS_PER_SEC);
+			t_frec = clock();*/
 			
   			
-			new_data = 0;
+			
 
 			//Pass data from buffer to structure of data
 			sd->d[0] = data.laser1;
@@ -70,33 +70,30 @@ void *slam(void *vargp){
 			sd->timestamp += 1;		
 			sem_post(&sem_data);
 
-	
-			printf("Position: x: %d, y:%d, theta: %d\n",state->position.x,state->position.y,state->position.theta);
+			// Store trajectory
 			if((state->position.x!=last_position.x)||(state->position.y!=last_position.y)||(state->position.theta!=last_position.theta))
 			{
 				trajectory[i++] = state->position;
 				if(i>1000)
 					i = 0;
 			}
-	
 			last_position = state->position;
-
-			/*printf("Data 1 %d\t",data.laser1);
-			printf("Data 2 %d\t",data.laser2);
-			printf("Data 3 %d\t",data.laser3);
-			printf("Data 4 %d\t",data.laser4);
-			printf("Data 5 %d\t",data.laser5);
-			printf("Data 6 %d\t",data.laser6);
-			printf("Data 7 %d\t",data.laser7);
-			printf("Data 8 %d\t",data.laser8);
-			printf("Yaw %d\n",data.imu_yaw);*/
-			
-				
-			ts_iterative_map_building(sd, state);
 		
-			//if(sd->timestamp == 1)
-			ts_save_map_pgm(state->map, state->map, "map", TS_MAP_SIZE,TS_MAP_SIZE);			
+			// Iterate the algorithm	
+			ts_iterative_map_building(sd, state);
 			
+
+			print++;
+			//if(sd->timestamp == 1)
+			if(print == 6)
+			{
+				printf("Position: x: %d, y:%d, theta: %d\n",state->position.x,state->position.y,state->position.theta);
+				ts_save_position(state->position.x,state->position.y,state->position.theta, state->map, "pos", TS_MAP_SIZE,TS_MAP_SIZE);
+				ts_save_map_pgm(state->map, state->map, "map", TS_MAP_SIZE,TS_MAP_SIZE);			
+				print = 0;
+			}
+			
+			// With this we can stop the adquisition
 			if(getch()=='s')
 			{
 				printf("Pause, press a key to continue ... \n");
