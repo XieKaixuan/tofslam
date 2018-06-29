@@ -110,6 +110,7 @@ long getMicrotime();
 void set_params(ts_laser_parameters_t *laser_params);
 void set_init_pos(ts_position_t *position);
 
+void ts_get_data(ts_sensor_data_t *sd);
 void ts_state_init(ts_state_t *state, ts_map_t *map, ts_laser_parameters_t *laser_params, ts_position_t *position, int hole_width);
 void ts_build_scan(ts_sensor_data_t *sd, ts_scan_t *scan, ts_state_t *state);
 void ts_map_init(ts_map_t *map);

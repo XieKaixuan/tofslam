@@ -57,7 +57,7 @@ while carryOn:
     
 
     # Lets print robot position	
-    
+    last_pos = (250,250)
     with open("/home/diego/esp_rtos/esp-open-rtos/tofslam/computer/pos",'r') as f:
         for line in f:
             if line.strip():
@@ -66,8 +66,8 @@ while carryOn:
                 pos.append(int(line[0]))
                 pos.append(int(line[1]))
                 pos.append(int(line[2]))
+                pygame.draw.line(screen,(255,0,0),[pos[0],pos[1]],[last_pos[0],last_pos[1]],1)  
                 last_pos = pos
-                pygame.draw.line(screen,(255,0,0),[pos[0],pos[1]],[last_pos[0],last_pos[1]],5)  
                 #screen.set_at((pos[0], pos[1]), (255,0,0))
     #Rotate and draw robot
     rot_robot = rotate_center(robot,pos[2])

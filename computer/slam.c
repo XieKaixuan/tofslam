@@ -47,6 +47,7 @@ void *slam(void *vargp){
 
 	while(1)
 	{	
+		// Lock sem to check new data flag
 		sem_wait(&sem_data);
 		if(new_data == 1)
 		{
@@ -57,19 +58,10 @@ void *slam(void *vargp){
 			t_frec = clock();*/
 			
   			
+			// Get the data
+			ts_get_data(sd);
 			
-
-			//Pass data from buffer to structure of data
-			sd->d[0] = data.laser1;
-			sd->d[1] = data.laser2;
-			sd->d[2] = data.laser3;
-			sd->d[3] = data.laser4;
-			sd->d[4] = data.laser5;
-			sd->d[5] = data.laser6;
-			sd->d[6] = data.laser7;
-			sd->d[7] = data.laser8;
-			sd->theta = data.imu_yaw;
-			sd->timestamp += 1;		
+			// Unlock sem	
 			sem_post(&sem_data);
 
 			// Iterate the algorithm	
@@ -95,6 +87,7 @@ void *slam(void *vargp){
 		}
 		else
 		{
+			// Unlock sem if there is no data
 			sem_post(&sem_data);
 		}
 
@@ -108,3 +101,18 @@ void *slam(void *vargp){
 
 
 
+void ts_get_data(ts_sensor_data_t *sd)
+{
+
+	sd->d[0] = data.laser1;
+	sd->d[1] = data.laser2;
+	sd->d[2] = data.laser3;
+	sd->d[3] = data.laser4;
+	sd->d[4] = data.laser5;
+	sd->d[5] = data.laser6;
+	sd->d[6] = data.laser7;
+	sd->d[7] = data.laser8;
+	sd->theta = data.imu_yaw;
+	sd->timestamp += 1;	
+
+}
