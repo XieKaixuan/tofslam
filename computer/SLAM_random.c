@@ -29,9 +29,10 @@ void ts_random_init(ts_randomizer_t *d, unsigned long jsrseed)
 double ts_random_normal(ts_randomizer_t *d, double m, double s) 
 { 
     double x;
-    d->hz = SHR3(d); 
+    d->hz = SHR3(d);
     d->iz = d->hz & 127;
     x= ((unsigned long)abs(d->hz) < d->kn[d->iz])? d->hz * d->wn[d->iz] : ts_random_normal_fix(d); // Generic version
+    
     return x * s + m ;
 };
 
@@ -76,7 +77,7 @@ double ts_random_normal_fix(ts_randomizer_t *d)
     }   
 }
 
-ts_position_t ts_monte_carlo_search(ts_randomizer_t *randomizer, ts_scan_t *scan, ts_map_t *map, ts_position_t *start_pos, double sigma_xy, double sigma_theta, int stop, int *bd)
+ts_position_t ts_monte_carlo_search(ts_randomizer_t *randomizer, ts_scan_t *scan, ts_map_t *map, ts_position_t *start_pos, double sigma_xy, int stop, int *bd)
 {
     ts_position_t currentpos, bestpos, lastbestpos;
     int currentdist;
@@ -130,12 +131,12 @@ ts_position_t ts_monte_carlo_search(ts_randomizer_t *randomizer, ts_scan_t *scan
 				lastbestdist = bestdist;
 				counter = 0;
 				sigma_xy *= 0.5;
-				sigma_theta *= 0.5;
+				//sigma_theta *= 0.5;
 			}
 		}
     } while (counter < stop);
 	// Print partiles
-	//ts_save_map_pgm(particles, particles, "random", TS_MAP_SIZE,TS_MAP_SIZE);	
+	ts_save_map(particles, particles, "random", TS_MAP_SIZE,TS_MAP_SIZE);	
 	//printf("Best dist: %d\n",bestdist);    
     if (bd)
         *bd = bestdist;

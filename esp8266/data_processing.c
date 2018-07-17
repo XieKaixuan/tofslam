@@ -27,14 +27,14 @@ void processing(void *pvParameters)
 	kalman_state state[8];
 
 	//Init kalman filters 
-	state[0] = kalman_init(0.125,1,1023,100);
-	state[1] = kalman_init(0.125,1,1023,100);
-	state[2] = kalman_init(0.125,1,1023,100);
-	state[3] = kalman_init(0.125,1,1023,100);
-	state[4] = kalman_init(0.125,1,1023,100);
-	state[5] = kalman_init(0.125,1,1023,100);
-	state[6] = kalman_init(0.125,1,1023,100);
-	state[7] = kalman_init(0.125,1,1023,100);
+	state[0] = kalman_init(1,15,1,100); //(process, measurement, error, init_value) 10,170,50,100
+	state[1] = kalman_init(1,15,1,100);
+	state[2] = kalman_init(1,15,1,100);
+	state[3] = kalman_init(1,15,1,100);
+	state[4] = kalman_init(1,15,1,100);
+	state[5] = kalman_init(1,15,1,100);
+	state[6] = kalman_init(1,15,1,100);
+	state[7] = kalman_init(1,15,1,100);
 
 	xLastWakeTime = xTaskGetTickCount(); // Get current time
 	while(1)
@@ -81,8 +81,6 @@ void processing(void *pvParameters)
 				state[6] =kalman_update(state[6],data.laser7);
 				state[7] =kalman_update(state[7],data.laser8);
 	
-					
-
 				// Pass data procesed into the send structure
 				xSemaphoreTake(sem_processed_data,0);
 			  	data_processed.laser1 = state[0].x;
@@ -106,7 +104,7 @@ void processing(void *pvParameters)
 	}
 }
 
-kalman_state kalman_init(double q, double r, double p, double initial_value)
+kalman_state kalman_init(double q, double r, double p, double initial_value) //(process_noise, measurement noise, estimation error, init_value)
 {
   kalman_state result;
   result.q = q;

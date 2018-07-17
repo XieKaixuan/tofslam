@@ -51,7 +51,7 @@ void send_data(void *pvParameters){
 			int imu_yaw = 0;
 		    sprintf(msg,"%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n",data_processed.laser1,data_processed.laser2,data_processed.laser3,data_processed.laser4,data_processed.laser5,data_processed.laser6,data_processed.laser7,data_processed.laser8,data_processed.yaw,number);        
 			number += 1;
-			printf("Number: %d\n",number);
+			//printf("Number: %d\n",number);
 		    struct netbuf* buf = netbuf_new();
 		    void* data = netbuf_alloc(buf, strlen(msg));
 

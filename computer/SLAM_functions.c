@@ -40,7 +40,7 @@ void ts_map_init(ts_map_t *map)
 	//printf("Map initiated\n");
 }
 
-void ts_state_init(ts_state_t *state, ts_map_t *map, ts_laser_parameters_t *laser_params, ts_position_t *position, int hole_width)
+void ts_state_init(ts_state_t *state, ts_map_t *map, ts_laser_parameters_t *laser_params, ts_position_t *position, int hole_width, double sigma_xy, int memory)
 {
 	state->map = map;
 	state->laser_params = *laser_params;
@@ -49,8 +49,8 @@ void ts_state_init(ts_state_t *state, ts_map_t *map, ts_laser_parameters_t *lase
 	state->distance = 0;
 	state->done = 0;
 	state->hole_width = hole_width;
-	state->sigma_xy = 0.000000003; //Check why I need to use such a little value
-	state->sigma_theta = 0.0000000001;
+	state->sigma_xy = sigma_xy; //Check why I need to use such a little value
+	state->memory = memory;
 	printf("State initiated\n");
 }
 
@@ -248,13 +248,13 @@ void ts_iterative_map_building(ts_sensor_data_t *sd, ts_state_t *state)
     ts_build_scan(sd, &state->scan, state);
  	
 	// Estimate the position based on Monte Carlo search
-    state->position = ts_monte_carlo_search(&state->randomizer, &state->scan, state->map, &state->position, state->sigma_xy, state->sigma_theta, 1000, NULL);
+    state->position = ts_monte_carlo_search(&state->randomizer, &state->scan, state->map, &state->position, state->sigma_xy, 1000, NULL);
 		
 
   	
 	
     // Map update
-    ts_map_update(&state->scan, state->map, &state->position,100, state->hole_width);
+    ts_map_update(&state->scan, state->map, &state->position, state->memory, state->hole_width);
 
     // Prepare next step
     state->timestamp = sd->timestamp;
@@ -263,7 +263,7 @@ void ts_iterative_map_building(ts_sensor_data_t *sd, ts_state_t *state)
 
 
 void
-ts_save_map_pgm(ts_map_t *map, ts_map_t *overlay, char *filename, int width, int height) 
+ts_save_map(ts_map_t *map, ts_map_t *overlay, char *filename, int width, int height) 
 {
     int x, y, xp, yp;
     FILE *output;

@@ -20,7 +20,7 @@ BLACK = ( 0, 0, 0)
 WHITE = ( 255, 255, 255)
 
 #open a new window
-MAP_SIZE = 500
+MAP_SIZE = 300
 size = (MAP_SIZE,MAP_SIZE)
 screen = pygame.display.set_mode(size)
 pygame.display.set_caption("ToF SLAM")
@@ -30,7 +30,11 @@ carryOn = True
 #Set up the clock that controls the refresh rate
 clock = pygame.time.Clock()
 
+print_particles = 0
+print_robot = 1
+print_tra = 0
 i = 0
+pos = []
 
 #Start main loop
 while carryOn:
@@ -38,8 +42,15 @@ while carryOn:
 	# --- Main event loop
     for event in pygame.event.get(): # User did something
         if event.type == pygame.QUIT: # If user clicked close
-              carryOn = False # Flag that we are done so we exit this loop
-
+            carryOn = False # Flag that we are done so we exit this loop
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_p:     
+                print_particles = print_particles^1
+            if event.key == pygame.K_r:   
+                print_robot = print_robot^1
+            if event.key == pygame.K_t:   
+                print_tra = print_tra^1
+    
     x = 0
     y = 0
 
@@ -49,15 +60,31 @@ while carryOn:
     f.close()
     for line in map:
         if line.strip():
-            screen.set_at((x, y), (int(line),int(line),int(line)))
+            if int(line) < 257:
+                screen.set_at((x, y), (int(line),int(line),int(line)))
             x = x + 1
             if x > (MAP_SIZE-1):
                 x = 0
                 y = y + 1
     
-
+    if print_particles == 1:
+        # Print particles of the filter
+        x = 0
+        y = 0
+        f = open("/home/diego/esp_rtos/esp-open-rtos/tofslam/computer/random",'r')
+        map = f.readlines()
+        f.close()
+        for line in map:
+            if line.strip():
+                if int(line) == 0:
+                    screen.set_at((x, y), (0,255,0))
+                x = x + 1
+                if x > (MAP_SIZE-1):
+                    x = 0
+                    y = y + 1
+    
     # Lets print robot position	
-    last_pos = (250,250)
+    last_pos = (MAP_SIZE/2,MAP_SIZE/2)
     with open("/home/diego/esp_rtos/esp-open-rtos/tofslam/computer/pos",'r') as f:
         for line in f:
             if line.strip():
@@ -66,12 +93,13 @@ while carryOn:
                 pos.append(int(line[0]))
                 pos.append(int(line[1]))
                 pos.append(int(line[2]))
-                pygame.draw.line(screen,(255,0,0),[pos[0],pos[1]],[last_pos[0],last_pos[1]],1)  
+                if print_tra == 1:
+                    pygame.draw.line(screen,(0,0,255),[pos[0],pos[1]],[last_pos[0],last_pos[1]],1)  
                 last_pos = pos
-                #screen.set_at((pos[0], pos[1]), (255,0,0))
-    #Rotate and draw robot
-    rot_robot = rotate_center(robot,pos[2])
-    screen.blit(rot_robot,(pos[0] - rot_robot.get_rect().center[0],pos[1] - rot_robot.get_rect().center[1]))
+    if print_robot == 1:    
+        #Rotate and draw robot
+        rot_robot = rotate_center(robot,pos[2])
+        screen.blit(rot_robot,(pos[0] - rot_robot.get_rect().center[0],pos[1] - rot_robot.get_rect().center[1]))
     
     # Draw position   
     #pygame.draw.line(screen,(255,0,0),[pos[0],pos[1]],[pos[0]+10,pos[1]],1)  

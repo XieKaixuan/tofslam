@@ -25,25 +25,25 @@ void *slam(void *vargp){
 	set_params(laser_params);
 	set_init_pos(position);
     ts_map_init(map);
-    ts_state_init(state, map, laser_params, position, 25); //ts_state_init(state, map, laser_params, position, hole_width);
-    unsigned long jsrseed = 1 ;
+    ts_state_init(state, map, laser_params, position, 25, 0.000000002, 50); //ts_state_init(state, map, laser_params, position, hole_width, sigma_xy 0.000000003, memory);
+    unsigned long jsrseed = 1;
     ts_random_init(&state->randomizer,jsrseed);
 	int count = 0;
 
 	clock_t t_frec = 0;	
 
-	int i = 0, print = 0;
+	int print = 1;
 	char buf;
 
 	// Create a file to store trajectory
 	FILE* output = fopen("pos", "w");
 	fclose(output);
 
-	initscr();
+	/*initscr();
     cbreak();
     noecho();
     scrollok(stdscr, TRUE);
-    nodelay(stdscr, TRUE);
+    nodelay(stdscr, TRUE);*/
 
 	while(1)
 	{	
@@ -53,9 +53,9 @@ void *slam(void *vargp){
 		{
 			new_data = 0;
 			
-			/*t_frec = (clock()-t_frec);
+			t_frec = (clock()-t_frec);
 			printf("%.16g milisegundos\n", t_frec * 1000.0/ CLOCKS_PER_SEC);
-			t_frec = clock();*/
+			t_frec = clock();
 			
   			
 			// Get the data
@@ -68,22 +68,21 @@ void *slam(void *vargp){
 			ts_iterative_map_building(sd, state);
 			
 
-			print++;
+			
 			//if(sd->timestamp == 1)
-			if(true)
+			if(print)
 			{
 				printf("Position: x: %d, y:%d, theta: %d\n",state->position.x,state->position.y,state->position.theta);
 				ts_save_position(state->position.x,state->position.y,state->position.theta, state->map, "pos", TS_MAP_SIZE,TS_MAP_SIZE);
-				ts_save_map_pgm(state->map, state->map, "map", TS_MAP_SIZE,TS_MAP_SIZE);			
-				print = 0;
+				ts_save_map(state->map, state->map, "map", TS_MAP_SIZE,TS_MAP_SIZE);			
 			}
 			
 			// With this we can stop the adquisition
-			if(getch()=='s')
+			/*if(getch()=='s')
 			{
 				printf("Pause, press a key to continue ... \n");
 				getchar();
-			}
+			}*/
 		}
 		else
 		{

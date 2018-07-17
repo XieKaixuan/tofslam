@@ -47,7 +47,7 @@ void *slam(void *vargp);
 #endif
 
 #define TS_SCAN_SIZE 8
-#define TS_MAP_SIZE 500
+#define TS_MAP_SIZE 300
 #define TS_MAP_SCALE 1
 #define TS_NO_OBSTACLE 65500
 #define TS_OBSTACLE 0
@@ -102,7 +102,7 @@ typedef struct {
     int hole_width;
     ts_scan_t scan;
 	double sigma_xy;
-    double sigma_theta;
+    int memory;
 } ts_state_t;
 
 long getMicrotime();
@@ -111,7 +111,7 @@ void set_params(ts_laser_parameters_t *laser_params);
 void set_init_pos(ts_position_t *position);
 
 void ts_get_data(ts_sensor_data_t *sd);
-void ts_state_init(ts_state_t *state, ts_map_t *map, ts_laser_parameters_t *laser_params, ts_position_t *position, int hole_width);
+void ts_state_init(ts_state_t *state, ts_map_t *map, ts_laser_parameters_t *laser_params, ts_position_t *position, int hole_width, double sigma_xy, int memory);
 void ts_build_scan(ts_sensor_data_t *sd, ts_scan_t *scan, ts_state_t *state);
 void ts_map_init(ts_map_t *map);
 int ts_distance_scan_to_map(ts_scan_t *scan, ts_map_t *map, ts_position_t *pos);
@@ -119,11 +119,11 @@ void ts_iterative_map_building(ts_sensor_data_t *sd, ts_state_t *state);
 void ts_map_update(ts_scan_t *scan, ts_map_t *map, ts_position_t *position, int quality, int hole_width);
 
 void ts_random_init(ts_randomizer_t *d, unsigned long jsrseed);
-ts_position_t ts_monte_carlo_search(ts_randomizer_t *randomizer, ts_scan_t *scan, ts_map_t *map, ts_position_t *start_pos, double sigma_xy, double sigma_theta, int stop, int *bestdist);
+ts_position_t ts_monte_carlo_search(ts_randomizer_t *randomizer, ts_scan_t *scan, ts_map_t *map, ts_position_t *start_pos, double sigma_xy, int stop, int *bestdist);
 double ts_random_normal(ts_randomizer_t *d, double m, double s);
 double ts_random_normal_fix(ts_randomizer_t *d);
 static unsigned long SHR3(ts_randomizer_t *d);
 
-void ts_save_map_pgm(ts_map_t *map, ts_map_t *overlay, char *filename, int width, int height);
-
+void ts_save_map(ts_map_t *map, ts_map_t *overlay, char *filename, int width, int height);
+void ts_save_position(int x, int y, int theta, ts_map_t *map, char *filename, int width, int height);
 #endif // _TINYSLAM_H_
